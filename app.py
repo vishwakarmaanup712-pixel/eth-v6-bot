@@ -265,9 +265,17 @@ def trades():
         return "no trades yet"
     return open("forward_trades.csv").read(), 200, {"Content-Type":"text/plain"}
 
+# START THREAD FOR BOTH LOCAL AND GUNICORN (Render)
+def start_bot():
+    if not getattr(app, 'bot_started', False):
+        app.bot_started = True
+        t = threading.Thread(target=trading_loop, daemon=True)
+        t.start()
+        print(">>> TRADING THREAD STARTED - gunicorn compatible", flush=True)
+
+start_bot()
+
 if __name__=="__main__":
-    # start trading thread
-    t=threading.Thread(target=trading_loop, daemon=True)
-    t.start()
     port=int(os.getenv("PORT",10000))
     app.run(host="0.0.0.0", port=port)
+
