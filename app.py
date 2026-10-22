@@ -104,18 +104,20 @@ def trading_loop():
     while True:
         try:
             now = datetime.now(timezone.utc)
-            # wait until 1m10s after hour
-            next_hour = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-            wake = next_hour + timedelta(seconds=70)
-            # if we just started and we are past 1m10s, run immediately
-            if now.minute==0 and now.second<70:
-                wake = now + timedelta(seconds=10)
+            # Candle closes at HH:00, evaluate at HH:01:10
+            cur_hour = now.replace(minute=0, second=0, microsecond=0)
+            eval_this_hour = cur_hour + timedelta(seconds=70)
+            if now < eval_this_hour:
+                wake = eval_this_hour
+            else:
+                wake = cur_hour + timedelta(hours=1, seconds=70)
             secs = (wake - now).total_seconds()
-            if secs>0:
-                last_status["next_wake"]=wake.strftime("%H:%M:%S UTC")
-                print(f"Sleep {secs/60:.1f} min until {last_status['next_wake']}", flush=True)
+            if secs > 5:
+                last_status["next_wake"] = wake.strftime("%H:%M:%S UTC")
+                print(f"Sleep {secs/60:.1f} min until {last_status['next_wake']} (now {now.strftime('%H:%M:%S')})", flush=True)
                 time.sleep(min(secs, 300))
                 continue
+            print(f"--- EVALUATING CANDLE AT {now.strftime('%H:%M:%S UTC')} (closed {cur_hour.strftime('%H:00')}) ---", flush=True)
 
             # fetch candles
             df = fetch_candles()
