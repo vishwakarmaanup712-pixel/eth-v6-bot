@@ -99,7 +99,8 @@ def trading_loop():
     import pandas as pd
     position=None
     print("ETH V6 RENDER BOT STARTED - waiting for candle close +70s", flush=True)
-    last_status["next_wake"]="starting..."
+    last_status["next_wake"]="starting..." 
+    print(f"BOT LOOP ENTERED - last_status id={id(last_status)}", flush=True)
     while True:
         try:
             now = datetime.now(timezone.utc)
@@ -268,15 +269,17 @@ def trades():
         return "no trades yet"
     return open("forward_trades.csv").read(), 200, {"Content-Type":"text/plain"}
 
-# START THREAD FOR BOTH LOCAL AND GUNICORN (Render)
+# START THREAD ONLY IN WORKER (not in gunicorn master)
 def start_bot():
+    # only start if not already started in THIS process
     if not getattr(app, 'bot_started', False):
         app.bot_started = True
         t = threading.Thread(target=trading_loop, daemon=True)
         t.start()
-        print(">>> TRADING THREAD STARTED - gunicorn compatible", flush=True)
+        print(">>> TRADING THREAD STARTED IN WORKER - gunicorn fixed", flush=True)
 
-start_bot()
+# DO NOT auto-start at import for gunicorn - let first request start it
+# start_bot() will be called from home() route
 
 if __name__=="__main__":
     port=int(os.getenv("PORT",10000))
