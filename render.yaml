@@ -3,7 +3,7 @@ services:
     name: eth-v6-bot
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 1 --log-file - --access-logfile -
+    startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
