@@ -98,7 +98,8 @@ def trading_loop():
     global last_status
     import pandas as pd
     position=None
-    print("ETH V6 RENDER BOT STARTED - waiting for candle close +70s")
+    print("ETH V6 RENDER BOT STARTED - waiting for candle close +70s", flush=True)
+    last_status["next_wake"]="starting..."
     while True:
         try:
             now = datetime.now(timezone.utc)
@@ -111,7 +112,7 @@ def trading_loop():
             secs = (wake - now).total_seconds()
             if secs>0:
                 last_status["next_wake"]=wake.strftime("%H:%M:%S UTC")
-                print(f"Sleep {secs/60:.1f} min until {last_status['next_wake']}")
+                print(f"Sleep {secs/60:.1f} min until {last_status['next_wake']}", flush=True)
                 time.sleep(min(secs, 300))
                 continue
 
@@ -247,6 +248,8 @@ def trading_loop():
 
 @app.route("/")
 def home():
+    # ensure bot thread is running in THIS gunicorn worker
+    start_bot()
     return jsonify({
         "status":"ETH V6 CAPPED BOT RUNNING",
         "symbol":SYMBOL,
